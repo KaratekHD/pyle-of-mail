@@ -4,19 +4,21 @@ from imap_tools import MailBox
 from collections import defaultdict
 from datetime import datetime
 
+import logging
+
 
 # Connect to the imap server + logging
 def imap_connect():
-    log('Logging in to ' + imap_server + '...')
+    logging.info('Logging in to ' + imap_server + '...')
     imap = MailBox(imap_server).login(username, password)
-    log('OK')
+    logging.info('Success!')
     return imap
 
 # Disconnect from the imap server + logging
 def imap_disconnect(imap):
-    log('Disconnecting from ' + imap_server + '...')
+    logging.info('Disconnecting from ' + imap_server + '...')
     imap.logout()
-    log('OK')
+    logging.info('OK')
 
 # Append log messages to the log file
 def log(message):
@@ -29,7 +31,7 @@ def log(message):
         timestamp += ' '
 
     # Timestamp the message and add a newline at the end
-    message = f'{timestamp}\t{message}\n'
+    message = f'{timestamp}\t{message}'
 
     # Open the log file, dump the message inside and then close it
     file = open(logfile, "a+")
@@ -85,11 +87,9 @@ def filter_mailbox(imap, mailbox):
             target = filters[rule]
             if rule.upper() in mail.from_.upper():
                 dict[target].append(mail.uid)
-                log(mail.uid)
-                log(target)
-                log('Moving from ' + mailbox + ' to ' + target + ' mail')
-                log('\tfrom: ' + mail.from_)
-                log('\tsubject: ' + mail.subject)
+                logging.info('Moving from ' + mailbox + ' to ' + target + ' mail')
+                logging.info('\tfrom: ' + mail.from_)
+                logging.info('\tsubject: ' + mail.subject)
                 count += 1
 
     # Parse the dictionary for each directory, and move the emails in bulk
@@ -131,15 +131,15 @@ def create_folders(imap):
     folders = get_folders()
     # For each required folder, check if it already exists or not,
     # and create it if required.
-    log('Creating mailboxes...')
+    logging.info('Creating mailboxes...')
     for folder in folders:
         if imap.folder.exists(folder):
-            log('\t- Mailbox already exists: ' + folder)
+            logging.debug('\t- Mailbox already exists: ' + folder)
         else:
             try:
                 imap.folder.create(folder)
-                log('\t- Successfully created mailbox: ' + folder)
+                logging.info('\t- Successfully created mailbox: ' + folder)
             except Exception as ex:
-                print(ex)
-                log('Failed to create mailbox: ' + folder)
-    log('Done')
+                logging.debug(ex)
+                logging.error('Failed to create mailbox: ' + folder)
+    logging.info('Mailboxes created.')

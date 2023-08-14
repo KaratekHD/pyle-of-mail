@@ -1,7 +1,9 @@
 from time import sleep
 from config import mailboxes, sleep_time
-from functions import filter_mailbox, log, create_folders, imap_connect, imap_disconnect
+from functions import filter_mailbox, create_folders, imap_connect, imap_disconnect
+import logging
 
+logging.basicConfig(format="[%(asctime)s - %(funcName)s - %(levelname)s] %(message)s", level=logging.INFO)
 
 # Connect to the imap server, ensure the needed
 # mailboxes are present and then disconnect
@@ -16,14 +18,14 @@ while True:
 
     # Loop through all the required mailboxes and filter them
     for mailbox in mailboxes:
-        log('Filtering started on ' + mailbox)
+        logging.info('Filtering started on ' + mailbox)
         if filter_mailbox(imap, mailbox) == 0:
-            log('There was nothing to do.')
+            logging.info('There was nothing to do.')
 
     # Disconnect from the imap server
     imap_disconnect(imap)
 
     # Sleep for as many seconds as indicated in the config.py file
-    log('Napsiees!')
+    logging.debug(f'Filtering done. Rerunning in {sleep_time} seconds.')
     sleep(sleep_time)
-    log('Gluten morgan!')
+    logging.debug('Filtering triggered by timer.')
