@@ -1,6 +1,6 @@
 from config import filters, logfile, username, password, imap_server
 
-from imap_tools import MailBox, A
+from imap_tools import MailBox
 from collections import defaultdict
 from datetime import datetime
 
@@ -67,7 +67,7 @@ def filter_mailbox(imap, mailbox):
     # NOTE: the returned value of ima.fetc() is a generator
     # we want to convert it to a list, so that we can loop
     # through it multiple times.
-    mails_list = list(imap.fetch(A(seen=True)))
+    mails_list = list(imap.fetch())
 
     # This dictionary acts as a 'to do list', in the sense that
     # it stores what emails should be moved and where.
@@ -82,9 +82,12 @@ def filter_mailbox(imap, mailbox):
         for rule in filters:
             # Convert both strings to upper, since we do not want the filters to
             # be case-sensitive
+            target = filters[rule]
             if rule.upper() in mail.from_.upper():
-                dict[filters[rule]].append(mail.uid)
-                log('Moving from ' + mailbox + ' to ' + filters[rule] + ' mail')
+                dict[target].append(mail.uid)
+                log(mail.uid)
+                log(target)
+                log('Moving from ' + mailbox + ' to ' + target + ' mail')
                 log('\tfrom: ' + mail.from_)
                 log('\tsubject: ' + mail.subject)
                 count += 1
@@ -93,7 +96,7 @@ def filter_mailbox(imap, mailbox):
     # This should be more efficient thatn moving each email at a time in terms
     # of requests/sec.
     for entry in dict:
-        imap.move([m for m in dict[entry]], entry)
+        imap.move([m for m in dict[entry]], entry.replace("/", "."))
 
     return count
 
@@ -113,11 +116,9 @@ def get_folders():
 
         for level in folder.split('/'):
             # Add one level to the path per iteration
-            target += '{}/'.format(level)
-
+            target += '{}|'.format(level)
             # Remove the trailing backslash
             formatted = target[0 : len(target) - 1]
-
             # Add it to the list if it's not in there already
             if (formatted not in list):
                 list.append(formatted)
@@ -128,7 +129,6 @@ def get_folders():
 def create_folders(imap):
     # Get a list of all the mailboxes required for the filter rules
     folders = get_folders()
-
     # For each required folder, check if it already exists or not,
     # and create it if required.
     log('Creating mailboxes...')
@@ -139,6 +139,7 @@ def create_folders(imap):
             try:
                 imap.folder.create(folder)
                 log('\t- Successfully created mailbox: ' + folder)
-            except:
+            except Exception as ex:
+                print(ex)
                 log('Failed to create mailbox: ' + folder)
     log('Done')
