@@ -116,7 +116,7 @@ def get_folders():
 
         for level in folder.split('/'):
             # Add one level to the path per iteration
-            target += '{}|'.format(level)
+            target += '{}.'.format(level)
             # Remove the trailing backslash
             formatted = target[0 : len(target) - 1]
             # Add it to the list if it's not in there already
